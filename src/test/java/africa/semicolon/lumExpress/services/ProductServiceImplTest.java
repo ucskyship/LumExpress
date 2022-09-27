@@ -30,7 +30,7 @@ class ProductServiceImplTest {
         request = CreateProductRequest
                 .builder()
                 .productName("Milk")
-                .category("Beverages")
+                .productCategory("Beverages")
                 .price(BigDecimal.valueOf(30.00))
                 .quantity(10)
                 .imageUrl(file)
