@@ -1,8 +1,10 @@
 package africa.semicolon.lumExpress.data.models;
 
 import lombok.*;
+import org.springframework.validation.annotation.Validated;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,6 @@ public class Product {
     private BigDecimal price;
     private int quantity;
     @ElementCollection
-    private List<Category> category = new ArrayList<>();
+    private List<Category> categories = new ArrayList<>();
     private String imageUrl;
 }
