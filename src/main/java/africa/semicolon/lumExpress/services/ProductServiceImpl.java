@@ -1,6 +1,7 @@
 package africa.semicolon.lumExpress.services;
 
 import africa.semicolon.lumExpress.data.dtos.request.AddProductRequest;
+import africa.semicolon.lumExpress.data.dtos.request.GetAllElementRequest;
 import africa.semicolon.lumExpress.data.dtos.request.UpdateProductRequest;
 import africa.semicolon.lumExpress.data.dtos.response.AddProductResponse;
 import africa.semicolon.lumExpress.data.models.Category;
@@ -60,10 +61,10 @@ public class ProductServiceImpl implements iProductService {
     }
 
     @Override
-    public Page<Product> getAllProducts() {
-        Pageable pageSpecs = PageRequest.of(0, 5);
-        productRepository.findAll();
-        return null;
+    public Page<Product> getAllProducts(GetAllElementRequest getAllElementRequest) {
+        Pageable pageSpecs = PageRequest.of(
+                getAllElementRequest.getPageNumber()-1, getAllElementRequest.getNumberOfProductPerPage());
+        return productRepository.findAll(pageSpecs);
     }
 
     @Override

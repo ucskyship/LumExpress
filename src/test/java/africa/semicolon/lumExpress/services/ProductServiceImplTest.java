@@ -1,13 +1,13 @@
 package africa.semicolon.lumExpress.services;
 
 import africa.semicolon.lumExpress.data.dtos.request.AddProductRequest;
-import africa.semicolon.lumExpress.data.models.Product;
+import africa.semicolon.lumExpress.data.dtos.request.GetAllElementRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@Slf4j
 class ProductServiceImplTest {
     @Autowired
     private iProductService productService;
@@ -38,16 +39,6 @@ class ProductServiceImplTest {
                 .quantity(10)
                 .imageUrl(file)
                 .build();
-
-//        Path path1 = Paths.get("");
-//        MultipartFile file1 = new MockMultipartFile("", Files.readAllBytes(path1));
-//        request1 = AddProductRequest.builder()
-//                .productName("")
-//                .productCategory("")
-//                .price(BigDecimal.valueOf(59.99))
-//                .quantity(8)
-//                .imageUrl(file1)
-//                .build();
     }
 
     @AfterEach
@@ -77,6 +68,17 @@ class ProductServiceImplTest {
 
     @Test
     void getAllProductsTest() throws IOException {
-        Page<Product> productPage = productService.getAllProducts();
+        productService.addProduct(request);
+        var getItemRequest = buildGetAllElementRequest();
+        var productPage = productService.getAllProducts(getItemRequest);
+        log.info("page contents::{}", productPage);
+    }
+
+    private GetAllElementRequest buildGetAllElementRequest() {
+        return GetAllElementRequest
+                .builder()
+                .numberOfProductPerPage(8)
+                .pageNumber(1)
+                .build();
     }
 }
