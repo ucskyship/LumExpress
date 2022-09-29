@@ -4,6 +4,7 @@ import africa.semicolon.lumExpress.data.dtos.request.AddProductRequest;
 import africa.semicolon.lumExpress.data.dtos.request.GetAllElementRequest;
 import africa.semicolon.lumExpress.data.dtos.request.UpdateProductRequest;
 import africa.semicolon.lumExpress.data.dtos.response.AddProductResponse;
+import africa.semicolon.lumExpress.data.dtos.response.UpdateProductResponse;
 import africa.semicolon.lumExpress.data.models.Category;
 import africa.semicolon.lumExpress.data.models.Product;
 import africa.semicolon.lumExpress.data.repositories.ProductRepository;
@@ -19,7 +20,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -43,15 +43,31 @@ public class ProductServiceImpl implements iProductService {
 
     private AddProductResponse buildAddProductResponse(Product savedProduct) {
         return AddProductResponse.builder()
-                .productId(savedProduct.getId())
                 .message("product add success")
-                .code(201)
+                .productId(savedProduct.getId())
+                .productName(savedProduct.getName())
+                .statusCode(201)
+                .price(savedProduct.getPrice())
                 .build();
     }
 
     @Override
-    public String updateProductDetails(UpdateProductRequest updateProductRequest) {
-        return null;
+    public UpdateProductResponse updateProductDetails(UpdateProductRequest updateProductRequest) {
+        var foundProduct = productRepository.findById(updateProductRequest.getId()).orElseThrow(
+                ()-> new ProductNotFoundException(String.format("product with id %d not found", updateProductRequest.getId())));
+        foundProduct.setPrice(updateProductRequest.getPrice());
+        foundProduct.setDescription(updateProductRequest.getDescription());
+        foundProduct.setQuantity(updateProductRequest.getQuantity());
+        foundProduct.setName(updateProductRequest.getProductName());
+        var updatedProductDetails = productRepository.save(foundProduct);
+
+        return UpdateProductResponse
+                .builder()
+                .productName(updatedProductDetails.getName())
+                .message("update success")
+                .description(updatedProductDetails.getDescription())
+                .statusCode(201)
+                .build();
     }
 
     @Override

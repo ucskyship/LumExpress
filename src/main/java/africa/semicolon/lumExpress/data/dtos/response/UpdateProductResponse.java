@@ -9,10 +9,10 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AddProductResponse {
+public class UpdateProductResponse {
     private String message;
-    private Long productId;
-    private String productName;
     private int statusCode;
+    private String productName;
+    private String description;
     private BigDecimal price;
 }
