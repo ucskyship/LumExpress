@@ -18,4 +18,6 @@ public interface iProductService {
     Product getProductById(Long id);
     Page<Product> getAllProducts(GetAllElementRequest getAllElementRequest);
     String deleteProduct(Long id);
+    Long count();
+    void deleteALl();
 }

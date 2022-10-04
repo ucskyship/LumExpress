@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @Slf4j
@@ -27,7 +28,7 @@ class ProductServiceImplTest {
     @Autowired
     private iProductService productService;
     AddProductRequest request;
-    AddProductResponse savedProduct;
+    AddProductResponse response;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -35,19 +36,20 @@ class ProductServiceImplTest {
         MultipartFile file = new MockMultipartFile("peak", Files.readAllBytes(path));
 
         request = buildAddProductRequest(file);
-        savedProduct = productService.addProduct(request);
+        response = productService.addProduct(request);
     }
 
     @AfterEach
     void tearDown() {
+        productService.deleteALl();
     }
 
     @Test
-    void addProductTest() throws IOException {
-        assertThat(savedProduct).isNotNull();
-        assertThat(savedProduct.getProductId()).isGreaterThan(0L);
-        assertThat(savedProduct.getMessage()).isNotNull();
-        assertThat(savedProduct.getStatusCode()).isEqualTo(201);
+    void addProductTest() {
+        assertThat(response).isNotNull();
+        assertThat(response.getProductId()).isGreaterThan(0L);
+        assertThat(response.getMessage()).isNotNull();
+        assertThat(response.getStatusCode()).isEqualTo(201);
     }
 
     @Test
@@ -56,24 +58,29 @@ class ProductServiceImplTest {
         var response = productService.updateProductDetails(updateRequest);
         assertThat(response).isNotNull();
         assertThat(response.getDescription()).isEqualTo("it's just milo");
+        assertThat(productService.count()).isEqualTo(1L);
     }
 
     @Test
-    void getProductByIdTest() throws IOException {
-        var foundProduct = productService.getProductById(savedProduct.getProductId());
+    void getProductByIdTest() {
+        var foundProduct = productService.getProductById(response.getProductId());
         assertThat(foundProduct).isNotNull();
-        assertThat(foundProduct.getId()).isEqualTo(savedProduct.getProductId());
+        assertThat(foundProduct.getId()).isEqualTo(response.getProductId());
     }
 
     @Test
-    void getAllProductsTest() throws IOException {
+    void getAllProductsTest() {
         var getItemRequest = buildGetAllElementRequest();
         var productPage = productService.getAllProducts(getItemRequest);
         log.info("page contents::{}", productPage);
+        assertEquals(1L, productService.count());
     }
 
     @Test
     void deleteProductTest() {
+        var foundProduct = productService.getProductById(response.getProductId());
+        productService.deleteProduct(foundProduct.getId());
+        assertThat(productService.count()).isEqualTo(0L);
     }
 
     private AddProductRequest buildAddProductRequest(MultipartFile file) {
