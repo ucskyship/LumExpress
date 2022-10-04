@@ -55,10 +55,10 @@ public class ProductServiceImpl implements iProductService {
     public UpdateProductResponse updateProductDetails(UpdateProductRequest updateProductRequest) {
         var foundProduct = productRepository.findById(updateProductRequest.getId()).orElseThrow(
                 ()-> new ProductNotFoundException(String.format("product with id %d not found", updateProductRequest.getId())));
-        foundProduct.setPrice(updateProductRequest.getPrice());
-        foundProduct.setDescription(updateProductRequest.getDescription());
-        foundProduct.setQuantity(updateProductRequest.getQuantity());
         foundProduct.setName(updateProductRequest.getProductName());
+        foundProduct.setPrice(updateProductRequest.getPrice());
+        foundProduct.setQuantity(updateProductRequest.getQuantity());
+        foundProduct.setDescription(updateProductRequest.getDescription());
         var updatedProductDetails = productRepository.save(foundProduct);
 
         return UpdateProductResponse
@@ -85,6 +85,17 @@ public class ProductServiceImpl implements iProductService {
 
     @Override
     public String deleteProduct(Long id) {
-        return null;
+        productRepository.deleteById(id);
+        return "product deleted successfully";
+    }
+
+    @Override
+    public Long count() {
+        return productRepository.count();
+    }
+
+    @Override
+    public void deleteALl() {
+        productRepository.deleteAll();
     }
 }
