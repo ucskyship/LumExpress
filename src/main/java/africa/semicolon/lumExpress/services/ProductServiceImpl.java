@@ -2,7 +2,6 @@ package africa.semicolon.lumExpress.services;
 
 import africa.semicolon.lumExpress.data.dtos.request.AddProductRequest;
 import africa.semicolon.lumExpress.data.dtos.request.GetAllElementRequest;
-import africa.semicolon.lumExpress.data.dtos.request.UpdateProductRequest;
 import africa.semicolon.lumExpress.data.dtos.response.AddProductResponse;
 import africa.semicolon.lumExpress.data.dtos.response.UpdateProductResponse;
 import africa.semicolon.lumExpress.data.models.Category;
@@ -11,6 +10,10 @@ import africa.semicolon.lumExpress.data.repositories.ProductRepository;
 import africa.semicolon.lumExpress.exceptions.ProductNotFoundException;
 import africa.semicolon.lumExpress.services.cloud.iCloudService;
 import com.cloudinary.utils.ObjectUtils;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -26,7 +29,9 @@ import java.io.IOException;
 @Slf4j
 public class ProductServiceImpl implements iProductService {
     private final ProductRepository productRepository;
-    private final ModelMapper modelMapper = new ModelMapper();
+    private final ModelMapper modelMapper;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
     private final iCloudService cloudService;
 
     @Override
@@ -52,21 +57,39 @@ public class ProductServiceImpl implements iProductService {
     }
 
     @Override
-    public UpdateProductResponse updateProductDetails(UpdateProductRequest updateProductRequest) {
-        var foundProduct = productRepository.findById(updateProductRequest.getId()).orElseThrow(
-                ()-> new ProductNotFoundException(String.format("product with id %d not found", updateProductRequest.getId())));
-        foundProduct.setName(updateProductRequest.getProductName());
-        foundProduct.setPrice(updateProductRequest.getPrice());
-        foundProduct.setQuantity(updateProductRequest.getQuantity());
-        foundProduct.setDescription(updateProductRequest.getDescription());
-        var updatedProductDetails = productRepository.save(foundProduct);
+    public UpdateProductResponse updateProductDetails(Long productId, JsonPatch patch) throws JsonPatchException {
+//        find product
+        var foundProduct = productRepository.findById(productId).orElseThrow(
+                () -> new ProductNotFoundException(String.format("product with id %d not found", productId)));
+        var updatedProduct = applyPatchToProduct(patch, foundProduct);
+//        save found product
+        var savedProduct = productRepository.save(updatedProduct);
+        return buildUpdateResponse(savedProduct);
+    }
 
+    private Product applyPatchToProduct(JsonPatch patch, Product foundProduct) throws JsonPatchException {
+        //        convert found product to json node
+        var productNode = objectMapper.convertValue(foundProduct, JsonNode.class);
+        //        apply patch to productNode
+        JsonNode patchedProductNode;
+        try {
+            patchedProductNode = patch.apply(productNode);
+        //        convert patchedNode to product object
+            var updatedProduct = objectMapper.readValue(objectMapper.writeValueAsBytes(patchedProductNode), Product.class);
+            return updatedProduct;
+        }catch (IOException | JsonPatchException exception){
+            exception.printStackTrace();
+        }
+        return null;
+      }
+
+    private UpdateProductResponse buildUpdateResponse(Product savedProduct) {
         return UpdateProductResponse
                 .builder()
-                .productName(updatedProductDetails.getName())
-                .message("update success")
-                .description(updatedProductDetails.getDescription())
-                .statusCode(201)
+                .productName(savedProduct.getName())
+                .price(savedProduct.getPrice())
+                .message("update successful")
+                .statusCode(200)
                 .build();
     }
 
@@ -79,7 +102,7 @@ public class ProductServiceImpl implements iProductService {
     @Override
     public Page<Product> getAllProducts(GetAllElementRequest getAllElementRequest) {
         Pageable pageSpecs = PageRequest.of(
-                getAllElementRequest.getPageNumber()-1, getAllElementRequest.getNumberOfProductPerPage());
+                getAllElementRequest.getPageNumber() - 1, getAllElementRequest.getNumberOfProductPerPage());
         return productRepository.findAll(pageSpecs);
     }
 

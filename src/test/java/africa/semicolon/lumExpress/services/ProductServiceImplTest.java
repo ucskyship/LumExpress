@@ -2,8 +2,13 @@ package africa.semicolon.lumExpress.services;
 
 import africa.semicolon.lumExpress.data.dtos.request.AddProductRequest;
 import africa.semicolon.lumExpress.data.dtos.request.GetAllElementRequest;
-import africa.semicolon.lumExpress.data.dtos.request.UpdateProductRequest;
 import africa.semicolon.lumExpress.data.dtos.response.AddProductResponse;
+import africa.semicolon.lumExpress.data.dtos.response.UpdateProductResponse;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jackson.jsonpointer.JsonPointer;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.ReplaceOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +23,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -54,11 +60,20 @@ class ProductServiceImplTest {
 
     @Test
     void updateProductDetailsTest() {
-        var updateRequest = buildUpdateProductRequest();
-        var response = productService.updateProductDetails(updateRequest);
+        ObjectMapper mapper = new ObjectMapper();
+        UpdateProductResponse updateRes=null;
+        try {
+            JsonNode value = mapper.readTree("50.0");
+            JsonPatch patch = new JsonPatch(List.of(new ReplaceOperation(new JsonPointer("/price"), value)));
+            updateRes = productService.updateProductDetails(1L, patch);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        log.info("updated product:: {}", updateRes);
         assertThat(response).isNotNull();
-        assertThat(response.getDescription()).isEqualTo("it's just milo");
-        assertThat(productService.count()).isEqualTo(1L);
+        assertThat(updateRes.getStatusCode()).isEqualTo(200);
+        assertThat(productService.getProductById(1L).getPrice().compareTo(BigDecimal.valueOf(50.00))).isEqualTo(0);
+//        assertThat(productService.getProductById(1L).getName()).isEqualTo("eggs");
     }
 
     @Test
@@ -91,16 +106,6 @@ class ProductServiceImplTest {
                 .price(BigDecimal.valueOf(39.89))
                 .quantity(10)
                 .imageUrl(file)
-                .build();
-    }
-
-    private UpdateProductRequest buildUpdateProductRequest() {
-        return UpdateProductRequest
-                .builder()
-                .id(1L)
-                .price(BigDecimal.valueOf(40.99))
-                .quantity(1)
-                .description("it's just milo")
                 .build();
     }
 
